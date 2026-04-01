@@ -1,1 +1,22 @@
 /target
+
+# Rust
+debug/
+
+# Build artifacts and logs
+*.log
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Environment files
+.env
+.env.*
+
+# Editor swap and temp files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
