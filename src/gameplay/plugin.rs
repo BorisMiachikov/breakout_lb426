@@ -10,6 +10,7 @@ pub struct GameplayPlugin;
 impl Plugin for GameplayPlugin {
     fn build(&self, app: &mut App) {
         app
+            .insert_resource(CurrentLevelPath::default())
             .insert_resource(Lives(3))
             .insert_resource(Score(0))
 

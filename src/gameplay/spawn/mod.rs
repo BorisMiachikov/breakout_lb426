@@ -6,6 +6,7 @@ use crate::gameplay::components::collider::Collider;
 use crate::gameplay::resources::{Lives, Score};
 
 mod level;
+pub use level::CurrentLevelPath;
 
 #[derive(Component)]
 pub struct GameEntity;
@@ -21,13 +22,18 @@ pub fn reset_game_resources(mut lives: ResMut<Lives>, mut score: ResMut<Score>) 
     score.0 = 0;
 }
 
-pub fn spawn_game(mut commands: Commands, ball_query: Query<Entity, With<Ball>>) {
+pub fn spawn_game(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    current_level: Res<CurrentLevelPath>,
+    ball_query: Query<Entity, With<Ball>>,
+) {
     if !ball_query.is_empty() {
         return;
     }
     spawn_paddle(commands.reborrow());
-    spawn_ball(commands.reborrow());
-    level::setup_level(commands);
+    spawn_ball(commands.reborrow(), &asset_server);
+    level::setup_level(commands, current_level);
 }
 
 fn spawn_paddle(mut commands: Commands) {
@@ -50,16 +56,17 @@ fn spawn_paddle(mut commands: Commands) {
     ));
 }
 
-fn spawn_ball(mut commands: Commands) {
+fn spawn_ball(mut commands: Commands, asset_server: &AssetServer) {
     let size = Vec2::new(20.0, 20.0);
 
     let mut velocity = Vec2::new(200.0, 200.0);
     let speed = velocity.length();
     velocity = velocity.normalize() * speed;
+    let texture = asset_server.load("textures/ball.png");
 
     commands.spawn((
         Sprite {
-            color: Color::srgba(0.9, 0.9, 0.2, 1.0),
+            image: texture,
             custom_size: Some(size),
             ..Default::default()
         },
