@@ -4,6 +4,7 @@ use bevy::window::WindowResolution;
 use crate::app::states::GameState;
 use crate::core::camera::{camera_scaling, setup_camera};
 use crate::core::config::GameConfig;
+use crate::core::cursor::{hide_cursor, show_cursor};
 use crate::gameplay::plugin::GameplayPlugin;
 use crate::ui::plugin::UiPlugin;
 
@@ -30,6 +31,13 @@ impl Plugin for AppPlugins {
             .init_state::<GameState>()
             .add_systems(Startup, setup_camera)
             .add_systems(Update, camera_scaling)
+            .add_systems(OnEnter(GameState::Playing), hide_cursor)
+            .add_systems(OnEnter(GameState::MainMenu), show_cursor)
+            .add_systems(OnEnter(GameState::Settings), show_cursor)
+            .add_systems(OnEnter(GameState::Paused), show_cursor)
+            .add_systems(OnEnter(GameState::GameOver), show_cursor)
+            .add_systems(OnEnter(GameState::LevelComplete), show_cursor)
+            .add_systems(OnEnter(GameState::Victory), show_cursor)
             .add_plugins((
                 GameplayPlugin,
                 UiPlugin,

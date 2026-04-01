@@ -1,7 +1,8 @@
-use bevy::prelude::*;
-use crate::app::states::GameState;
 use bevy::app::AppExit;
+use bevy::prelude::*;
 
+use crate::app::states::GameState;
+use crate::ui::screens::style::*;
 
 #[derive(Component)]
 pub struct MainMenuUI;
@@ -10,6 +11,9 @@ pub struct MainMenuUI;
 pub struct MenuItem {
     pub index: usize,
 }
+
+#[derive(Component)]
+pub struct MenuItemLabel;
 
 #[derive(Resource)]
 pub struct MenuState {
@@ -26,52 +30,67 @@ pub fn setup_main_menu(
 
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
 
-    commands.spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            row_gap: Val::Px(10.0),
-            ..default()
-        },
-        MainMenuUI,
-    ))
-    .with_children(|parent| {
-        // Заголовок
-        parent.spawn((
-            Text::new("BREAKOUT"),
-            TextFont {
-                font: font.clone(),
-                font_size: 64.0,
-                ..default()
-            },
-            TextColor(Color::WHITE),
-            Node {
-                align_self: AlignSelf::Center,
-                ..default()
-            },
-        ));
+    commands
+        .spawn((
+            screen_root_node(),
+            screen_overlay_color(),
+            MainMenuUI,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((screen_panel_node(), panel_color()))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("BREAKOUT"),
+                        TextFont {
+                            font: font.clone(),
+                            font_size: TITLE_SIZE,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(10.0)),
+                            ..default()
+                        },
+                    ));
 
-        // Пункты меню
-        for (i, item) in MENU_ITEMS.iter().enumerate() {
-            parent.spawn((
-                Text::new(*item),
-                TextFont {
-                    font: font.clone(),
-                    font_size: 40.0,
-                    ..default()
-                },
-                TextColor(if i == 0 { Color::srgb(1.0, 1.0, 0.0)  } else { Color::WHITE }),
-                MenuItem { index: i },
-                Node {
-                    align_self: AlignSelf::Center,
-                    ..default()
-                },
-            ));
-        }
-    });
+                    for (i, item) in MENU_ITEMS.iter().enumerate() {
+                        parent
+                            .spawn((
+                                Button,
+                                menu_button_node(),
+                                if i == 0 { selected_color() } else { idle_color() },
+                                MenuItem { index: i },
+                            ))
+                            .with_children(|parent| {
+                                parent.spawn((
+                                    Text::new(*item),
+                                    TextFont {
+                                        font: font.clone(),
+                                        font_size: ITEM_SIZE,
+                                        ..default()
+                                    },
+                                    TextColor(if i == 0 { accent_text() } else { Color::WHITE }),
+                                    MenuItemLabel,
+                                ));
+                            });
+                    }
+
+                    parent.spawn((
+                        Text::new("Keyboard and mouse supported"),
+                        TextFont {
+                            font,
+                            font_size: SUBTITLE_SIZE,
+                            ..default()
+                        },
+                        TextColor(muted_text()),
+                        Node {
+                            margin: UiRect::top(Val::Px(10.0)),
+                            ..default()
+                        },
+                    ));
+                });
+        });
 }
 
 pub fn cleanup_main_menu(
@@ -81,6 +100,7 @@ pub fn cleanup_main_menu(
     for e in query.iter() {
         commands.entity(e).despawn();
     }
+    commands.remove_resource::<MenuState>();
 }
 
 pub fn main_menu_input(
@@ -89,46 +109,71 @@ pub fn main_menu_input(
     mut next_state: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
 ) {
-    if keys.just_pressed(KeyCode::ArrowUp) {
-        if menu_state.selected > 0 {
-            menu_state.selected -= 1;
-        }
-        info!("Menu selected: {}", menu_state.selected);
+    if keys.just_pressed(KeyCode::ArrowUp) && menu_state.selected > 0 {
+        menu_state.selected -= 1;
     }
 
-    if keys.just_pressed(KeyCode::ArrowDown) {
-        if menu_state.selected < MENU_ITEMS.len() - 1 {
-            menu_state.selected += 1;
-        }
-        info!("Menu selected: {}", menu_state.selected);
+    if keys.just_pressed(KeyCode::ArrowDown) && menu_state.selected < MENU_ITEMS.len() - 1 {
+        menu_state.selected += 1;
     }
 
     if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
-        info!("Menu Enter pressed, selected: {}", menu_state.selected);
-        match menu_state.selected {
-            0 => {
-                info!("Starting game...");
-                next_state.set(GameState::Playing);
+        activate_menu_item(menu_state.selected, &mut next_state, &mut exit);
+    }
+}
+
+pub fn main_menu_mouse_input(
+    mut interaction_query: Query<
+        (&Interaction, &MenuItem),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut menu_state: ResMut<MenuState>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut exit: MessageWriter<AppExit>,
+) {
+    for (interaction, item) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Hovered => {
+                menu_state.selected = item.index;
             }
-            1 => {
-                info!("Opening settings...");
-                next_state.set(GameState::Settings);
+            Interaction::Pressed => {
+                menu_state.selected = item.index;
+                activate_menu_item(item.index, &mut next_state, &mut exit);
             }
-            2 => { exit.write(AppExit::Success); }
-            _ => {}
+            Interaction::None => {}
         }
     }
 }
 
 pub fn update_menu_visuals(
     menu_state: Res<MenuState>,
-    mut query: Query<(&MenuItem, &mut TextColor)>,
+    mut query: Query<(&MenuItem, &Children, &mut BackgroundColor)>,
+    mut text_query: Query<&mut TextColor, With<MenuItemLabel>>,
 ) {
-    for (item, mut color) in query.iter_mut() {
-        if item.index == menu_state.selected {
-            color.0 = Color::srgb(1.0, 1.0, 0.0);
-        } else {
-            color.0 = Color::WHITE;
+    for (item, children, mut background) in query.iter_mut() {
+        let is_selected = item.index == menu_state.selected;
+
+        background.0 = if is_selected { selected_color().0 } else { idle_color().0 };
+
+        for child in children.iter() {
+            if let Ok(mut color) = text_query.get_mut(child) {
+                color.0 = if is_selected { accent_text() } else { Color::WHITE };
+            }
         }
+    }
+}
+
+fn activate_menu_item(
+    selected: usize,
+    next_state: &mut ResMut<NextState<GameState>>,
+    exit: &mut MessageWriter<AppExit>,
+) {
+    match selected {
+        0 => next_state.set(GameState::Playing),
+        1 => next_state.set(GameState::Settings),
+        2 => {
+            exit.write(AppExit::Success);
+        }
+        _ => {}
     }
 }

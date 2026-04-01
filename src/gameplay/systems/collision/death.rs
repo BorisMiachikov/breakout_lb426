@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::app::states::GameState;
-use crate::core::camera::VIRTUAL_HEIGHT;
+use crate::core::camera::{PLAYFIELD_CENTER_X, VIRTUAL_HEIGHT};
 use crate::gameplay::components::{ball::Ball, collider::Collider};
 use crate::gameplay::resources::lives::Lives;
 
@@ -24,7 +24,7 @@ pub fn ball_death(
                 next_state.set(GameState::GameOver);
             }
 
-            transform.translation = Vec3::new(0.0, -220.0, 0.0);
+            transform.translation = Vec3::new(PLAYFIELD_CENTER_X, -220.0, 0.0);
             ball.velocity = Vec2::new(200.0, 200.0);
 
             let max_speed = 400.0;

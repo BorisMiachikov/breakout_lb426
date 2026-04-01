@@ -1,2 +1,3 @@
+pub mod camera;
 pub mod config;
-pub mod camera; // если ты переносил камеру
+pub mod cursor;

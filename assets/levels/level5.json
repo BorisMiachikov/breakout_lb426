@@ -1,0 +1,13 @@
+{
+  "brick_width": 50.0,
+  "brick_height": 20.0,
+  "spacing": 5.0,
+  "top_y": 250.0,
+  "rows": [
+    "NSNSNSNSNS",
+    "SNSNSNSNSN",
+    "NS..SS..NS",
+    "SN..NN..SN",
+    "NSNSNSNSNS"
+  ]
+}

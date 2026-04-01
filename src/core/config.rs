@@ -15,7 +15,7 @@ pub struct GameConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         Self {
-            window_width: 960.0,
+            window_width: 860.0,
             window_height: 540.0,
             music_volume: 0.5,
             sfx_volume: 0.7,

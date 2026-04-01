@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::core::camera::VIRTUAL_WIDTH;
+use crate::core::camera::{playfield_left, playfield_right};
 use crate::gameplay::components::ball::Ball;
 use crate::gameplay::components::paddle::Paddle;
 
@@ -21,14 +21,12 @@ pub fn paddle_movement(
         Without<Ball>,
     >,
 ) {
-    let screen_half_width = VIRTUAL_WIDTH / 2.0;
-
     for (paddle, mut transform, collider) in query.iter_mut() {
         transform.translation.x += paddle.direction * paddle.speed * time.delta_secs();
 
         let half_width = collider.size.x / 2.0;
-        let min_x = -screen_half_width + half_width;
-        let max_x = screen_half_width - half_width;
+        let min_x = playfield_left() + half_width;
+        let max_x = playfield_right() - half_width;
 
         transform.translation.x = transform.translation.x.clamp(min_x, max_x);
     }

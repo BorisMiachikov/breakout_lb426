@@ -3,6 +3,7 @@ use std::fs;
 use bevy::prelude::*;
 use serde::Deserialize;
 
+use crate::core::camera::{playfield_left, PLAYFIELD_WIDTH};
 use crate::gameplay::components::brick::{Brick, BrickType};
 use crate::gameplay::components::collider::Collider;
 
@@ -62,7 +63,7 @@ pub fn spawn_block(commands: &mut Commands, block: &Block, brick_type: BrickType
     ));
 }
 
-pub fn setup_level(mut commands: Commands, current_level: Res<CurrentLevelPath>) {
+pub fn setup_level(mut commands: Commands, current_level: &CurrentLevelPath) {
     let level = load_level(&current_level.0).unwrap_or_else(|error| {
         warn!(
             "Failed to load level from '{}': {}. Falling back to built-in level.",
@@ -126,6 +127,8 @@ fn validate_level(level: &LevelFile) -> Result<(), String> {
 
 fn spawn_level(commands: &mut Commands, level: &LevelFile) {
     let cols = level.rows[0].chars().count();
+    let layout_width = cols as f32 * level.brick_width + (cols.saturating_sub(1)) as f32 * level.spacing;
+    let start_x = playfield_left() + (PLAYFIELD_WIDTH - layout_width) / 2.0 + level.brick_width / 2.0;
 
     for (row_index, row) in level.rows.iter().enumerate() {
         for (col_index, cell) in row.chars().enumerate() {
@@ -133,9 +136,7 @@ fn spawn_level(commands: &mut Commands, level: &LevelFile) {
                 continue;
             };
 
-            let x = col_index as f32 * (level.brick_width + level.spacing)
-                - (cols as f32 * (level.brick_width + level.spacing)) / 2.0
-                + level.brick_width / 2.0;
+            let x = start_x + col_index as f32 * (level.brick_width + level.spacing);
 
             let y = level.top_y - row_index as f32 * (level.brick_height + level.spacing);
 

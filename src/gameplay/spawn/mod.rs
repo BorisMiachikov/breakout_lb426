@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
+use crate::core::camera::PLAYFIELD_CENTER_X;
 use crate::gameplay::components::paddle::Paddle;
 use crate::gameplay::components::ball::Ball;
 use crate::gameplay::components::collider::Collider;
-use crate::gameplay::resources::{Lives, Score};
+use crate::gameplay::resources::{CampaignManifest, CurrentLevelIndex, Lives, Score};
 
 mod level;
 pub use level::CurrentLevelPath;
@@ -25,27 +26,51 @@ pub fn reset_game_resources(mut lives: ResMut<Lives>, mut score: ResMut<Score>) 
 pub fn spawn_game(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    current_level: Res<CurrentLevelPath>,
+    mut current_level_path: ResMut<CurrentLevelPath>,
+    current_level_index: Res<CurrentLevelIndex>,
+    manifest: Res<CampaignManifest>,
     ball_query: Query<Entity, With<Ball>>,
 ) {
     if !ball_query.is_empty() {
         return;
     }
-    spawn_paddle(commands.reborrow());
-    spawn_ball(commands.reborrow(), &asset_server);
-    level::setup_level(commands, current_level);
+
+    spawn_game_entities(
+        &mut commands,
+        &asset_server,
+        &mut current_level_path,
+        current_level_index.0,
+        &manifest,
+    );
 }
 
-fn spawn_paddle(mut commands: Commands) {
-    let size = Vec2::new(120.0, 20.0);
+pub fn spawn_game_entities(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    current_level_path: &mut CurrentLevelPath,
+    current_level_index: usize,
+    manifest: &CampaignManifest,
+) {
+    if let Some(level_path) = manifest.levels.get(current_level_index) {
+        current_level_path.0 = level_path.clone();
+    }
+
+    spawn_paddle(commands.reborrow(), asset_server);
+    spawn_ball(commands.reborrow(), asset_server);
+    level::setup_level(commands.reborrow(), current_level_path);
+}
+
+fn spawn_paddle(mut commands: Commands, asset_server: &AssetServer) {
+    let size = Vec2::new(100.0, 20.0);
+    let texture = asset_server.load("textures/Paddle.png");
 
     commands.spawn((
         Sprite {
-            color: Color::srgba(0.8, 0.2, 0.2, 1.0),
+            image: texture,
             custom_size: Some(size),
             ..Default::default()
         },
-        Transform::from_translation(Vec3::new(0.0, -250.0, 0.0)),
+        Transform::from_translation(Vec3::new(PLAYFIELD_CENTER_X, -250.0, 0.0)),
         GlobalTransform::default(),
         Paddle {
             speed: 500.0,
@@ -70,7 +95,7 @@ fn spawn_ball(mut commands: Commands, asset_server: &AssetServer) {
             custom_size: Some(size),
             ..Default::default()
         },
-        Transform::from_translation(Vec3::new(0.0, -220.0, 0.0)),
+        Transform::from_translation(Vec3::new(PLAYFIELD_CENTER_X, -220.0, 0.0)),
         GlobalTransform::default(),
         Ball { velocity },
         Collider { size },

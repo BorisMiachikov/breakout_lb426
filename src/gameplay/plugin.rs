@@ -10,11 +10,18 @@ pub struct GameplayPlugin;
 impl Plugin for GameplayPlugin {
     fn build(&self, app: &mut App) {
         app
+            .insert_resource(CampaignManifest::default())
+            .insert_resource(CurrentLevelIndex::default())
             .insert_resource(CurrentLevelPath::default())
             .insert_resource(Lives(3))
             .insert_resource(Score(0))
 
-            .add_systems(OnEnter(GameState::MainMenu), (cleanup_game, reset_game_resources))
+            .add_systems(
+                OnEnter(GameState::MainMenu),
+                (cleanup_game, reset_game_resources, reset_campaign_progress),
+            )
+            .add_systems(OnEnter(GameState::LevelComplete), (cleanup_game, advance_to_next_level))
+            .add_systems(OnEnter(GameState::Victory), cleanup_game)
             .add_systems(OnEnter(GameState::Playing), spawn_game)
 
             .add_systems(
@@ -22,12 +29,14 @@ impl Plugin for GameplayPlugin {
                 (
                     paddle_input,
                     paddle_movement,
+                    paddle_mouse_control,
                     ball_movement,
                     (
                         ball_wall_collision,
                         ball_paddle_collision,
                         ball_brick_collision,
                         ball_death,
+                        check_level_complete,
                     ),
                 )
                     .chain()
@@ -35,7 +44,7 @@ impl Plugin for GameplayPlugin {
             )
             .add_systems(
                 Update,
-                game_pause.run_if(in_state(GameState::Playing)),
+                (game_pause, debug_next_level).run_if(in_state(GameState::Playing)),
             );
     }
 }

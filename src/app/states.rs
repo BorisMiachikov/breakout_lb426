@@ -5,7 +5,9 @@ pub enum GameState {
     #[default]
     MainMenu,
     Playing,
+    LevelComplete,
     Paused,
     GameOver,
+    Victory,
     Settings,
 }

@@ -1,8 +1,19 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-pub const VIRTUAL_WIDTH: f32 = 960.0;
+pub const VIRTUAL_WIDTH: f32 = 860.0;
 pub const VIRTUAL_HEIGHT: f32 = 540.0;
+pub const SIDEBAR_WIDTH: f32 = 220.0;
+pub const PLAYFIELD_WIDTH: f32 = VIRTUAL_WIDTH - SIDEBAR_WIDTH;
+pub const PLAYFIELD_CENTER_X: f32 = -SIDEBAR_WIDTH / 2.0;
+
+pub fn playfield_left() -> f32 {
+    PLAYFIELD_CENTER_X - PLAYFIELD_WIDTH / 2.0
+}
+
+pub fn playfield_right() -> f32 {
+    PLAYFIELD_CENTER_X + PLAYFIELD_WIDTH / 2.0
+}
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2d);

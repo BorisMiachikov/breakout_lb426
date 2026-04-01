@@ -4,11 +4,11 @@
   "spacing": 5.0,
   "top_y": 250.0,
   "rows": [
-    "NNNNNNNNNN",
-    "SSSSSSSSSS",
-    "NNN....NNN",
-    "SSSSSSSSSS",
-    "NNNNNNNNNN",
-    "NNSSNNSSNN"
+    "NNNNNNNNNNN",
+    "SSSSSSSSSSS",
+    "NNNN....NNN",
+    "SSSSSSSSSSS",
+    "NNNNNNNNNNN",
+    "NNSSNNNSSNN"
   ]
 }

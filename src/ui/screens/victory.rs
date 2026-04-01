@@ -1,24 +1,31 @@
 use bevy::prelude::*;
 
 use crate::app::states::GameState;
-use crate::gameplay::resources::{CurrentLevelIndex, Lives, Score};
-use crate::gameplay::spawn::GameEntity;
+use crate::gameplay::resources::Score;
 use crate::ui::screens::style::*;
 
 #[derive(Component)]
-pub struct GameOverUI;
+pub struct VictoryUI;
 
-pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_victory(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    score: Res<Score>,
+) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
 
     commands
-        .spawn((screen_root_node(), screen_overlay_color(), GameOverUI))
+        .spawn((
+            screen_root_node(),
+            screen_overlay_color(),
+            VictoryUI,
+        ))
         .with_children(|parent| {
             parent
                 .spawn((screen_panel_node(), panel_color()))
                 .with_children(|parent| {
                     parent.spawn((
-                        Text::new("GAME OVER"),
+                        Text::new("YOU WIN"),
                         TextFont {
                             font: font.clone(),
                             font_size: TITLE_SIZE,
@@ -28,17 +35,17 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
 
                     parent.spawn((
-                        Text::new("Your run has ended"),
+                        Text::new(format!("Final Score: {}", score.0)),
                         TextFont {
                             font: font.clone(),
-                            font_size: ITEM_SIZE - 4.0,
+                            font_size: ITEM_SIZE - 2.0,
                             ..default()
                         },
                         TextColor(accent_text()),
                     ));
 
                     parent.spawn((
-                        Text::new("Press Space to restart"),
+                        Text::new("Press Enter to return to main menu"),
                         TextFont {
                             font,
                             font_size: SUBTITLE_SIZE,
@@ -50,32 +57,20 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-pub fn cleanup_game_over(
+pub fn cleanup_victory(
     mut commands: Commands,
-    query: Query<Entity, With<GameOverUI>>,
+    query: Query<Entity, With<VictoryUI>>,
 ) {
-    for e in query.iter() {
-        commands.entity(e).despawn();
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
     }
 }
 
-pub fn restart_game(
+pub fn victory_input(
     keys: Res<ButtonInput<KeyCode>>,
-    mut commands: Commands,
-    game_entities: Query<Entity, With<GameEntity>>,
-    mut current_level: ResMut<CurrentLevelIndex>,
-    mut lives: ResMut<Lives>,
-    mut score: ResMut<Score>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
-    if keys.just_pressed(KeyCode::Space) {
-        for entity in game_entities.iter() {
-            commands.entity(entity).despawn();
-        }
-
-        current_level.0 = 0;
-        lives.0 = 3;
-        score.0 = 0;
-        next_state.set(GameState::Playing);
+    if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
+        next_state.set(GameState::MainMenu);
     }
 }
