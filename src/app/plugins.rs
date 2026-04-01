@@ -33,6 +33,7 @@ impl Plugin for AppPlugins {
             .add_systems(Update, camera_scaling)
             .add_systems(OnEnter(GameState::Playing), hide_cursor)
             .add_systems(OnEnter(GameState::MainMenu), show_cursor)
+            .add_systems(OnEnter(GameState::HighScores), show_cursor)
             .add_systems(OnEnter(GameState::Settings), show_cursor)
             .add_systems(OnEnter(GameState::Paused), show_cursor)
             .add_systems(OnEnter(GameState::GameOver), show_cursor)

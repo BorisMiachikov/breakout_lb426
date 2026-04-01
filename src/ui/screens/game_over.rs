@@ -8,7 +8,11 @@ use crate::ui::screens::style::*;
 #[derive(Component)]
 pub struct GameOverUI;
 
-pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_game_over(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    score: Res<Score>,
+) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
 
     commands
@@ -28,7 +32,7 @@ pub fn setup_game_over(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
 
                     parent.spawn((
-                        Text::new("Your run has ended"),
+                        Text::new(format!("Final Score: {}", score.0)),
                         TextFont {
                             font: font.clone(),
                             font_size: ITEM_SIZE - 4.0,

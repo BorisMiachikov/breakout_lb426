@@ -16,6 +16,15 @@ impl Plugin for UiPlugin {
                     .run_if(in_state(GameState::MainMenu)),
             )
 
+            // High Scores
+            .add_systems(OnEnter(GameState::HighScores), setup_high_scores)
+            .add_systems(OnExit(GameState::HighScores), cleanup_high_scores)
+            .add_systems(
+                Update,
+                (high_scores_input, high_scores_mouse_input, update_high_scores_visuals)
+                    .run_if(in_state(GameState::HighScores)),
+            )
+
             // Playing HUD
             .add_systems(OnEnter(GameState::Playing), setup_playing_hud)
             .add_systems(OnExit(GameState::Playing), cleanup_playing_hud)

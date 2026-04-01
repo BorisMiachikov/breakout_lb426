@@ -13,6 +13,7 @@ impl Plugin for GameplayPlugin {
             .insert_resource(CampaignManifest::default())
             .insert_resource(CurrentLevelIndex::default())
             .insert_resource(CurrentLevelPath::default())
+            .insert_resource(HighScores::load())
             .insert_resource(Lives(3))
             .insert_resource(Score(0))
 
@@ -21,15 +22,19 @@ impl Plugin for GameplayPlugin {
                 (cleanup_game, reset_game_resources, reset_campaign_progress),
             )
             .add_systems(OnEnter(GameState::LevelComplete), (cleanup_game, advance_to_next_level))
+            .add_systems(OnEnter(GameState::GameOver), record_game_over_score)
+            .add_systems(OnEnter(GameState::Victory), record_victory_score)
             .add_systems(OnEnter(GameState::Victory), cleanup_game)
             .add_systems(OnEnter(GameState::Playing), spawn_game)
 
             .add_systems(
                 Update,
                 (
+                    launch_ball,
                     paddle_input,
                     paddle_movement,
                     paddle_mouse_control,
+                    stick_ball_to_paddle,
                     ball_movement,
                     (
                         ball_wall_collision,

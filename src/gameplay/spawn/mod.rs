@@ -83,10 +83,6 @@ fn spawn_paddle(mut commands: Commands, asset_server: &AssetServer) {
 
 fn spawn_ball(mut commands: Commands, asset_server: &AssetServer) {
     let size = Vec2::new(20.0, 20.0);
-
-    let mut velocity = Vec2::new(200.0, 200.0);
-    let speed = velocity.length();
-    velocity = velocity.normalize() * speed;
     let texture = asset_server.load("textures/ball.png");
 
     commands.spawn((
@@ -97,7 +93,10 @@ fn spawn_ball(mut commands: Commands, asset_server: &AssetServer) {
         },
         Transform::from_translation(Vec3::new(PLAYFIELD_CENTER_X, -220.0, 0.0)),
         GlobalTransform::default(),
-        Ball { velocity },
+        Ball {
+            velocity: Vec2::ZERO,
+            launched: false,
+        },
         Collider { size },
         GameEntity,
     ));

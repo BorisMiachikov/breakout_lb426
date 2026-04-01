@@ -279,11 +279,21 @@ pub fn settings_input(
 pub fn settings_mouse_input(
     mut adjust_query: Query<
         (&Interaction, &SettingsAdjustButton),
-        (Changed<Interaction>, With<Button>, Without<SettingsActionButton>),
+        (
+            Changed<Interaction>,
+            With<Button>,
+            With<SettingsAdjustButton>,
+            Without<SettingsActionButton>,
+        ),
     >,
     mut action_query: Query<
         (&Interaction, &SettingsActionButton),
-        (Changed<Interaction>, With<Button>, Without<SettingsAdjustButton>),
+        (
+            Changed<Interaction>,
+            With<Button>,
+            With<SettingsActionButton>,
+            Without<SettingsAdjustButton>,
+        ),
     >,
     mut settings_state: ResMut<SettingsState>,
     mut config: ResMut<GameConfig>,

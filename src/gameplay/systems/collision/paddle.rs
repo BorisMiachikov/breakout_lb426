@@ -9,8 +9,8 @@ const MAX_BOUNCE_ANGLE: f32 = std::f32::consts::FRAC_PI_3;
 const PADDLE_SEPARATION_EPSILON: f32 = 0.5;
 
 pub fn ball_paddle_collision(
-    mut ball_q: Query<(&mut Ball, &mut Transform, &Collider), Without<Paddle>>,
-    paddle_q: Query<(&Transform, &Collider), With<Paddle>>,
+    mut ball_q: Query<(&mut Ball, &mut Transform, &Collider), (With<Ball>, Without<Paddle>)>,
+    paddle_q: Query<(&Transform, &Collider), (With<Paddle>, Without<Ball>)>,
 ) {
     let Ok((paddle_tf, paddle_col)) = paddle_q.single() else {
         return;

@@ -6,8 +6,8 @@ use crate::utils::math::aabb_collision;
 pub fn ball_brick_collision(
     mut commands: Commands,
     mut score: ResMut<Score>,
-    mut ball_q: Query<(&mut Ball, &mut Transform, &Collider), Without<Paddle>>,
-    mut brick_q: Query<(Entity, &mut Brick, &Transform, &Collider), Without<Ball>>,
+    mut ball_q: Query<(&mut Ball, &mut Transform, &Collider), (With<Ball>, Without<Paddle>)>,
+    mut brick_q: Query<(Entity, &mut Brick, &Transform, &Collider), (With<Brick>, Without<Ball>)>,
 ) {
     let Ok((mut ball, mut ball_tf, ball_col)) = ball_q.single_mut() else { return };
 

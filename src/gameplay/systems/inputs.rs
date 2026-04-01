@@ -4,6 +4,7 @@ use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
 use crate::core::camera::{playfield_left, playfield_right, VIRTUAL_WIDTH};
+use crate::gameplay::components::ball::Ball;
 use crate::gameplay::components::paddle::Paddle;
 use crate::gameplay::components::collider::Collider;
 use crate::gameplay::resources::{CampaignManifest, CurrentLevelIndex};
@@ -34,6 +35,27 @@ pub fn game_pause(
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         next_state.set(GameState::Paused);
+    }
+}
+
+pub fn launch_ball(
+    keys: Res<ButtonInput<KeyCode>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mut ball_q: Query<&mut Ball>,
+) {
+    if !keys.just_pressed(KeyCode::Space) && !mouse_buttons.just_pressed(MouseButton::Left) {
+        return;
+    }
+
+    for mut ball in ball_q.iter_mut() {
+        if ball.launched {
+            continue;
+        }
+
+        let velocity = Vec2::new(200.0, 200.0);
+        let speed = velocity.length();
+        ball.velocity = velocity.normalize() * speed;
+        ball.launched = true;
     }
 }
 

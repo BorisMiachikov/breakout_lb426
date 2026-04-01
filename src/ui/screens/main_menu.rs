@@ -20,7 +20,7 @@ pub struct MenuState {
     pub selected: usize,
 }
 
-const MENU_ITEMS: [&str; 3] = ["Start Game", "Settings", "Quit"];
+const MENU_ITEMS: [&str; 4] = ["Start Game", "High Scores", "Settings", "Quit"];
 
 pub fn setup_main_menu(
     mut commands: Commands,
@@ -170,8 +170,9 @@ fn activate_menu_item(
 ) {
     match selected {
         0 => next_state.set(GameState::Playing),
-        1 => next_state.set(GameState::Settings),
-        2 => {
+        1 => next_state.set(GameState::HighScores),
+        2 => next_state.set(GameState::Settings),
+        3 => {
             exit.write(AppExit::Success);
         }
         _ => {}
