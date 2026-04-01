@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find F:ProjectrustBreakout_LB426 -not -path */target/* -type f)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(cargo check:*)",
+      "Bash(cargo run:*)"
+    ]
+  }
+}
