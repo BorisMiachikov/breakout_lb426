@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::gameplay::resources::Score;
 use crate::ui::components::{spawn_screen_background, spawn_screen_header};
 use crate::ui::screens::style::*;
@@ -132,11 +134,16 @@ pub fn cleanup_victory(
 
 pub fn victory_input(
     keys: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.40);
         next_state.set(GameState::HighScores);
     } else if keys.just_pressed(KeyCode::Escape) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.40);
         next_state.set(GameState::MainMenu);
     }
 }

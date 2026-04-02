@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::gameplay::resources::{CurrentLevelIndex, Lives, Score};
 use crate::gameplay::spawn::GameEntity;
 use crate::ui::components::{spawn_screen_background, spawn_screen_header};
@@ -135,6 +137,8 @@ pub fn cleanup_game_over(
 pub fn restart_game(
     keys: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     game_entities: Query<Entity, With<GameEntity>>,
     mut current_level: ResMut<CurrentLevelIndex>,
     mut lives: ResMut<Lives>,
@@ -142,6 +146,7 @@ pub fn restart_game(
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     if keys.just_pressed(KeyCode::Space) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.45);
         for entity in game_entities.iter() {
             commands.entity(entity).despawn();
         }
@@ -151,6 +156,7 @@ pub fn restart_game(
         score.0 = 0;
         next_state.set(GameState::Playing);
     } else if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.40);
         next_state.set(GameState::HighScores);
     }
 }

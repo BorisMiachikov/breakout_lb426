@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::gameplay::resources::{CampaignManifest, CurrentLevelIndex};
 use crate::ui::components::{spawn_screen_background, spawn_screen_header};
 use crate::ui::screens::style::*;
@@ -111,12 +113,16 @@ pub fn cleanup_level_complete(
 
 pub fn level_complete_input(
     keys: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     if keys.just_pressed(KeyCode::Enter)
         || keys.just_pressed(KeyCode::NumpadEnter)
         || keys.just_pressed(KeyCode::Space)
     {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.45);
         next_state.set(GameState::Playing);
     }
 }

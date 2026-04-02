@@ -3,6 +3,8 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::ui::components::{
     action_card_detail_color, action_card_title_color, spawn_action_card,
     spawn_screen_background, spawn_screen_header, ActionCardDetail, ActionCardTitle,
@@ -269,6 +271,9 @@ pub fn cleanup_main_menu(
 
 pub fn main_menu_input(
     keys: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut menu_state: ResMut<MenuState>,
     mut next_state: ResMut<NextState<GameState>>,
     mut exit: MessageWriter<AppExit>,
@@ -282,11 +287,15 @@ pub fn main_menu_input(
     }
 
     if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.45);
         activate_menu_item(menu_state.selected, &mut next_state, &mut exit);
     }
 }
 
 pub fn main_menu_mouse_input(
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut interaction_query: Query<
         (&Interaction, &MenuItem),
         (Changed<Interaction>, With<Button>),
@@ -305,6 +314,7 @@ pub fn main_menu_mouse_input(
             Interaction::Pressed => {
                 if item.enabled {
                     menu_state.selected = item.index;
+                    play_sfx(&mut commands, &audio_assets.bounce, &config, 0.45);
                     activate_menu_item(item.index, &mut next_state, &mut exit);
                 }
             }

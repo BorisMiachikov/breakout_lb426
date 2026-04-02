@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::WindowResolution;
 
 use crate::app::states::GameState;
+use crate::core::audio::{load_audio_assets, sync_background_music};
 use crate::core::camera::{camera_scaling, setup_camera};
 use crate::core::config::GameConfig;
 use crate::core::cursor::{hide_cursor, show_cursor};
@@ -29,8 +30,9 @@ impl Plugin for AppPlugins {
             }))
             .insert_resource(config)
             .init_state::<GameState>()
-            .add_systems(Startup, setup_camera)
+            .add_systems(Startup, (setup_camera, load_audio_assets).chain())
             .add_systems(Update, camera_scaling)
+            .add_systems(Update, sync_background_music)
             .add_systems(OnEnter(GameState::Playing), hide_cursor)
             .add_systems(OnEnter(GameState::MainMenu), show_cursor)
             .add_systems(OnEnter(GameState::HighScores), show_cursor)

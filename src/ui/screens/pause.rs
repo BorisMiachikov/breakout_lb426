@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::ui::components::{
     action_card_detail_color, action_card_title_color, spawn_action_card,
     spawn_screen_background, spawn_screen_header, ActionCardDetail, ActionCardTitle,
@@ -181,10 +183,14 @@ pub fn cleanup_pause_ui(
 
 pub fn pause_input(
     keys: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut pause_state: ResMut<PauseState>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.40);
         next_state.set(GameState::Playing);
     }
 
@@ -197,11 +203,15 @@ pub fn pause_input(
     }
 
     if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.45);
         activate_pause_item(pause_state.selected, &mut next_state);
     }
 }
 
 pub fn pause_mouse_input(
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut interaction_query: Query<(&Interaction, &PauseItem), (Changed<Interaction>, With<Button>)>,
     mut pause_state: ResMut<PauseState>,
     mut next_state: ResMut<NextState<GameState>>,
@@ -211,6 +221,7 @@ pub fn pause_mouse_input(
             Interaction::Hovered => pause_state.selected = item.index,
             Interaction::Pressed => {
                 pause_state.selected = item.index;
+                play_sfx(&mut commands, &audio_assets.bounce, &config, 0.45);
                 activate_pause_item(item.index, &mut next_state);
             }
             Interaction::None => {}

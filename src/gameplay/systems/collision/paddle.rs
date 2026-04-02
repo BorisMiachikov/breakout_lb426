@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::gameplay::components::{ball::Ball, collider::Collider, paddle::Paddle};
 use crate::utils::math::aabb_collision;
 
@@ -9,6 +11,9 @@ const MAX_BOUNCE_ANGLE: f32 = std::f32::consts::FRAC_PI_3;
 const PADDLE_SEPARATION_EPSILON: f32 = 0.5;
 
 pub fn ball_paddle_collision(
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut ball_q: Query<(&mut Ball, &mut Transform, &Collider), (With<Ball>, Without<Paddle>)>,
     paddle_q: Query<(&Transform, &Collider), (With<Paddle>, Without<Ball>)>,
 ) {
@@ -38,5 +43,7 @@ pub fn ball_paddle_collision(
         let paddle_top = paddle_tf.translation.y + paddle_col.size.y / 2.0;
         let ball_half_height = ball_col.size.y / 2.0;
         ball_tf.translation.y = paddle_top + ball_half_height + PADDLE_SEPARATION_EPSILON;
+
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.65);
     }
 }

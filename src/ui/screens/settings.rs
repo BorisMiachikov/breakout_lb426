@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
+use crate::core::audio::{play_sfx, AudioAssets};
 use crate::core::config::GameConfig;
 use crate::ui::components::{spawn_screen_background, spawn_screen_header};
 use crate::ui::screens::style::*;
@@ -306,6 +307,8 @@ pub fn cleanup_settings_ui(
 
 pub fn settings_input(
     keys: Res<ButtonInput<KeyCode>>,
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
     mut settings_state: ResMut<SettingsState>,
     mut config: ResMut<GameConfig>,
     mut next_state: ResMut<NextState<GameState>>,
@@ -320,22 +323,37 @@ pub fn settings_input(
 
     if keys.just_pressed(KeyCode::ArrowLeft) {
         adjust_selected_setting(settings_state.selected, -0.1, &mut config);
+        if settings_state.selected < 2 {
+            play_sfx(&mut commands, &audio_assets.bounce, &config, 0.30);
+        }
     }
 
     if keys.just_pressed(KeyCode::ArrowRight) {
         adjust_selected_setting(settings_state.selected, 0.1, &mut config);
+        if settings_state.selected < 2 {
+            play_sfx(&mut commands, &audio_assets.bounce, &config, 0.30);
+        }
     }
 
     if keys.just_pressed(KeyCode::Enter) || keys.just_pressed(KeyCode::NumpadEnter) {
-        activate_settings_item(settings_state.selected, &mut config, &mut next_state);
+        activate_settings_item(
+            settings_state.selected,
+            &mut commands,
+            &audio_assets,
+            &mut config,
+            &mut next_state,
+        );
     }
 
     if keys.just_pressed(KeyCode::Escape) {
+        play_sfx(&mut commands, &audio_assets.bounce, &config, 0.40);
         next_state.set(GameState::MainMenu);
     }
 }
 
 pub fn settings_mouse_input(
+    mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
     mut adjust_query: Query<
         (&Interaction, &SettingsAdjustButton),
         (
@@ -366,6 +384,7 @@ pub fn settings_mouse_input(
             Interaction::Pressed => {
                 settings_state.selected = button.index;
                 adjust_selected_setting(button.index, button.delta, &mut config);
+                play_sfx(&mut commands, &audio_assets.bounce, &config, 0.30);
             }
             Interaction::None => {}
         }
@@ -378,7 +397,13 @@ pub fn settings_mouse_input(
             }
             Interaction::Pressed => {
                 settings_state.selected = button.index;
-                activate_settings_item(button.index, &mut config, &mut next_state);
+                activate_settings_item(
+                    button.index,
+                    &mut commands,
+                    &audio_assets,
+                    &mut config,
+                    &mut next_state,
+                );
             }
             Interaction::None => {}
         }
@@ -498,14 +523,18 @@ fn adjust_selected_setting(index: usize, delta: f32, config: &mut GameConfig) {
 
 fn activate_settings_item(
     selected: usize,
+    commands: &mut Commands,
+    audio_assets: &Res<AudioAssets>,
     config: &mut GameConfig,
     next_state: &mut ResMut<NextState<GameState>>,
 ) {
     match selected {
         2 => {
+            play_sfx(commands, &audio_assets.bounce, config, 0.50);
             config.save();
         }
         3 => {
+            play_sfx(commands, &audio_assets.bounce, config, 0.40);
             next_state.set(GameState::MainMenu);
         }
         _ => {}

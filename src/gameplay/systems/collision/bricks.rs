@@ -1,10 +1,14 @@
 use bevy::prelude::*;
+use crate::core::audio::{play_sfx, AudioAssets};
+use crate::core::config::GameConfig;
 use crate::gameplay::components::{ball::Ball, collider::Collider, brick::Brick, paddle::Paddle};
 use crate::gameplay::resources::score::Score;
 use crate::utils::math::aabb_collision;
 
 pub fn ball_brick_collision(
     mut commands: Commands,
+    audio_assets: Res<AudioAssets>,
+    config: Res<GameConfig>,
     mut score: ResMut<Score>,
     mut ball_q: Query<(&mut Ball, &mut Transform, &Collider), (With<Ball>, Without<Paddle>)>,
     mut brick_q: Query<(Entity, &mut Brick, &Transform, &Collider), (With<Brick>, Without<Ball>)>,
@@ -44,7 +48,10 @@ pub fn ball_brick_collision(
 
             if brick.health == 0 {
                 score.0 += brick.score;
+                play_sfx(&mut commands, &audio_assets.brick_break, &config, 0.80);
                 commands.entity(entity).despawn();
+            } else {
+                play_sfx(&mut commands, &audio_assets.bounce, &config, 0.50);
             }
 
             break;
