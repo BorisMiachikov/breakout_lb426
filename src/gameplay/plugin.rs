@@ -14,12 +14,18 @@ impl Plugin for GameplayPlugin {
             .insert_resource(CurrentLevelIndex::default())
             .insert_resource(CurrentLevelPath::default())
             .insert_resource(HighScores::load())
+            .insert_resource(LatestRecordedRun::default())
             .insert_resource(Lives(3))
             .insert_resource(Score(0))
 
             .add_systems(
                 OnEnter(GameState::MainMenu),
-                (cleanup_game, reset_game_resources, reset_campaign_progress),
+                (
+                    cleanup_game,
+                    reset_game_resources,
+                    reset_campaign_progress,
+                    clear_latest_recorded_run,
+                ),
             )
             .add_systems(OnEnter(GameState::LevelComplete), (cleanup_game, advance_to_next_level))
             .add_systems(OnEnter(GameState::GameOver), record_game_over_score)

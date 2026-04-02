@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
-use crate::gameplay::resources::{CampaignManifest, CurrentLevelIndex, Lives, Score};
+use crate::gameplay::resources::{CampaignManifest, CurrentLevelIndex, HighScores, Lives, Score};
 use crate::core::camera::SIDEBAR_WIDTH;
+use crate::ui::screens::style::*;
 
 #[derive(Component)]
 pub struct PlayingHud;
@@ -11,6 +12,7 @@ pub enum HudValueKind {
     Score,
     Lives,
     Level,
+    BestScore,
 }
 
 pub fn setup_playing_hud(
@@ -20,9 +22,11 @@ pub fn setup_playing_hud(
     manifest: Res<CampaignManifest>,
     score: Res<Score>,
     lives: Res<Lives>,
+    high_scores: Res<HighScores>,
 ) {
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     let sidebar_width = SIDEBAR_WIDTH - 24.0;
+    let best_score = high_scores.entries.first().map(|entry| entry.score).unwrap_or(0);
 
     commands
         .spawn((
@@ -39,19 +43,33 @@ pub fn setup_playing_hud(
                 row_gap: Val::Px(18.0),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.08, 0.09, 0.11, 0.92)),
+            panel_color(),
             PlayingHud,
         ))
         .with_children(|parent| {
-            parent.spawn((
-                Text::new("RUN"),
-                TextFont {
-                    font: font.clone(),
-                    font_size: 34.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
+            parent
+                .spawn(header_block_node())
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("RUN HUD"),
+                        TextFont {
+                            font: font.clone(),
+                            font_size: SUBTITLE_SIZE - 2.0,
+                            ..default()
+                        },
+                        TextColor(secondary_accent_text()),
+                    ));
+
+                    parent.spawn((
+                        Text::new("Campaign Status"),
+                        TextFont {
+                            font: font.clone(),
+                            font_size: ITEM_SIZE - 2.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                });
 
             spawn_info_block(parent, &font, "Level", &format!(
                 "{} / {}",
@@ -61,20 +79,31 @@ pub fn setup_playing_hud(
 
             spawn_info_block(parent, &font, "Score", &score.0.to_string(), HudValueKind::Score, sidebar_width);
             spawn_info_block(parent, &font, "Lives", &lives.0.to_string(), HudValueKind::Lives, sidebar_width);
+            spawn_info_block(parent, &font, "Best Score", &best_score.to_string(), HudValueKind::BestScore, sidebar_width);
 
-            parent.spawn((
-                Text::new("Numpad *\nSkip level"),
-                TextFont {
-                    font,
-                    font_size: 18.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.72, 0.74, 0.78)),
-                Node {
-                    margin: UiRect::top(Val::Px(18.0)),
-                    ..default()
-                },
-            ));
+            parent
+                .spawn((section_card_node(sidebar_width), card_color()))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new("Quick Tips"),
+                        TextFont {
+                            font: font.clone(),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(subtle_text()),
+                    ));
+
+                    parent.spawn((
+                        Text::new("Esc pauses the run.\nNumpad * skips the current level."),
+                        TextFont {
+                            font,
+                            font_size: 17.0,
+                            ..default()
+                        },
+                        TextColor(muted_text()),
+                    ));
+                });
         });
 }
 
@@ -88,14 +117,8 @@ fn spawn_info_block(
 ) {
     parent
         .spawn((
-            Node {
-                width: Val::Px(width),
-                padding: UiRect::all(Val::Px(12.0)),
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(6.0),
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.15, 0.16, 0.20, 0.95)),
+            section_card_node(width),
+            card_color(),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -105,7 +128,7 @@ fn spawn_info_block(
                     font_size: 16.0,
                     ..default()
                 },
-                TextColor(Color::srgb(0.70, 0.73, 0.78)),
+                TextColor(muted_text()),
             ));
 
             parent.spawn((
@@ -115,7 +138,11 @@ fn spawn_info_block(
                     font_size: 28.0,
                     ..default()
                 },
-                TextColor(Color::WHITE),
+                TextColor(if matches!(value_kind, HudValueKind::BestScore) {
+                    secondary_accent_text()
+                } else {
+                    Color::WHITE
+                }),
                 value_kind,
             ));
         });
@@ -126,21 +153,26 @@ pub fn update_playing_hud(
     lives: Res<Lives>,
     current_level: Res<CurrentLevelIndex>,
     manifest: Res<CampaignManifest>,
+    high_scores: Res<HighScores>,
     mut query: Query<(&HudValueKind, &mut Text)>,
 ) {
     if !(score.is_changed()
         || lives.is_changed()
         || current_level.is_changed()
-        || manifest.is_changed())
+        || manifest.is_changed()
+        || high_scores.is_changed())
     {
         return;
     }
+
+    let best_score = high_scores.entries.first().map(|entry| entry.score).unwrap_or(0);
 
     for (kind, mut text) in query.iter_mut() {
         match kind {
             HudValueKind::Score => text.0 = score.0.to_string(),
             HudValueKind::Lives => text.0 = lives.0.to_string(),
             HudValueKind::Level => text.0 = format!("{} / {}", current_level.0 + 1, manifest.levels.len()),
+            HudValueKind::BestScore => text.0 = best_score.to_string(),
         }
     }
 }

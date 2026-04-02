@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::core::camera::PLAYFIELD_CENTER_X;
+use crate::core::camera::{PLAYFIELD_CENTER_X, VIRTUAL_HEIGHT};
 use crate::gameplay::components::paddle::Paddle;
 use crate::gameplay::components::ball::Ball;
 use crate::gameplay::components::collider::Collider;
@@ -55,9 +55,27 @@ pub fn spawn_game_entities(
         current_level_path.0 = level_path.clone();
     }
 
+    spawn_game_background(commands.reborrow(), asset_server);
     spawn_paddle(commands.reborrow(), asset_server);
     spawn_ball(commands.reborrow(), asset_server);
     level::setup_level(commands.reborrow(), current_level_path);
+}
+
+fn spawn_game_background(mut commands: Commands, asset_server: &AssetServer) {
+    let texture = asset_server.load("backgrounds/game_sat.png");
+    let size = Vec2::splat(VIRTUAL_HEIGHT);
+
+    commands.spawn((
+        Sprite {
+            image: texture,
+            custom_size: Some(size),
+            color: Color::srgba(1.0, 1.0, 1.0, 0.95),
+            ..Default::default()
+        },
+        Transform::from_translation(Vec3::new(PLAYFIELD_CENTER_X, 0.0, -20.0)),
+        GlobalTransform::default(),
+        GameEntity,
+    ));
 }
 
 fn spawn_paddle(mut commands: Commands, asset_server: &AssetServer) {

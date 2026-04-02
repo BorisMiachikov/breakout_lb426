@@ -1,11 +1,16 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use crate::app::states::GameState;
 use crate::core::config::GameConfig;
+use crate::ui::components::{spawn_screen_background, spawn_screen_header};
 use crate::ui::screens::style::*;
 
 #[derive(Component)]
 pub struct SettingsUI;
+
+#[derive(Component)]
+pub struct SettingsPanel;
 
 #[derive(Component)]
 pub struct SettingsRow {
@@ -33,19 +38,68 @@ pub struct SettingsActionButton {
     pub index: usize,
 }
 
+#[derive(Component)]
+pub struct SettingsControlsCard;
+
 #[derive(Resource)]
 pub struct SettingsState {
     pub selected: usize,
 }
 
+#[derive(Resource)]
+pub struct SettingsLayout {
+    pub compact: bool,
+}
+
 const SETTINGS_ITEMS: [&str; 4] = ["Music", "SFX", "Save", "Back"];
+const SETTINGS_COMPACT_HEIGHT_THRESHOLD: f32 = 760.0;
+
+fn settings_panel_color() -> BackgroundColor {
+    BackgroundColor(Color::srgba(0.03, 0.05, 0.09, 0.56))
+}
+
+fn settings_row_color() -> BackgroundColor {
+    BackgroundColor(Color::srgba(0.07, 0.11, 0.16, 0.46))
+}
+
+fn settings_card_color() -> BackgroundColor {
+    BackgroundColor(Color::srgba(0.06, 0.10, 0.15, 0.36))
+}
+
+fn settings_panel_node(compact: bool) -> Node {
+    Node {
+        width: Val::Px(WIDE_PANEL_WIDTH),
+        padding: UiRect::all(Val::Px(if compact { 16.0 } else { 24.0 })),
+        flex_direction: FlexDirection::Column,
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Stretch,
+        row_gap: Val::Px(if compact { 10.0 } else { 14.0 }),
+        ..default()
+    }
+}
+
+fn settings_row_node(compact: bool) -> Node {
+    Node {
+        width: Val::Px(MENU_BUTTON_WIDTH),
+        padding: UiRect::axes(Val::Px(16.0), Val::Px(if compact { 8.0 } else { 12.0 })),
+        justify_content: JustifyContent::SpaceBetween,
+        align_items: AlignItems::Center,
+        ..default()
+    }
+}
 
 pub fn setup_settings_ui(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     config: Res<GameConfig>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
+    let compact = window_query
+        .single()
+        .map(|window| is_settings_compact(window.height()))
+        .unwrap_or(false);
     commands.insert_resource(SettingsState { selected: 0 });
+    commands.insert_resource(SettingsLayout { compact });
 
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
 
@@ -56,41 +110,47 @@ pub fn setup_settings_ui(
             SettingsUI,
         ))
         .with_children(|parent| {
+            spawn_screen_background(parent, &asset_server, "backgrounds/menu.png");
+
             parent
-                .spawn((screen_panel_node(), panel_color()))
+                .spawn((settings_panel_node(compact), settings_panel_color(), SettingsPanel))
                 .with_children(|parent| {
-                    parent.spawn((
-                        Text::new("SETTINGS"),
-                        TextFont {
-                            font: font.clone(),
-                            font_size: TITLE_SIZE,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
+                    spawn_screen_header(
+                        parent,
+                        &font,
+                        "RUN OPTIONS",
+                        "SETTINGS",
+                        "Tune the audio mix now. Window settings are still read from config.json at startup.",
+                    );
 
-                    spawn_adjust_row(parent, &font, 0, &config, true);
-                    spawn_adjust_row(parent, &font, 1, &config, false);
-                    spawn_action_row(parent, &font, 2, "Save", false);
-                    spawn_action_row(parent, &font, 3, "Back", false);
+                    spawn_adjust_row(parent, &font, 0, &config, true, compact);
+                    spawn_adjust_row(parent, &font, 1, &config, false, compact);
+                    spawn_action_row(parent, &font, 2, "Save", false, compact);
+                    spawn_action_row(parent, &font, 3, "Back", false, compact);
 
-                    parent.spawn((
-                        Text::new("Mouse: use - / + buttons | Keyboard: arrows + Enter | Esc = back"),
-                        TextFont {
-                            font,
-                            font_size: SUBTITLE_SIZE,
-                            ..default()
-                        },
-                        TextColor(muted_text()),
-                        Node {
-                            margin: UiRect::top(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
+                    parent
+                        .spawn((section_card_node(MENU_BUTTON_WIDTH), settings_card_color(), SettingsControlsCard))
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Text::new("Controls"),
+                                TextFont {
+                                    font: font.clone(),
+                                    font_size: SUBTITLE_SIZE,
+                                    ..default()
+                                },
+                                TextColor(subtle_text()),
+                            ));
+
+                            parent.spawn((
+                                Text::new("Arrow keys select rows and adjust values. Enter activates Save or Back. Esc returns to the main menu."),
+                                TextFont {
+                                    font,
+                                    font_size: SUBTITLE_SIZE - 5.0,
+                                    ..default()
+                                },
+                                TextColor(muted_text()),
+                            ));
+                        });
                 });
         });
 }
@@ -101,17 +161,16 @@ fn spawn_adjust_row(
     index: usize,
     config: &GameConfig,
     selected: bool,
+    compact: bool,
 ) {
     parent
         .spawn((
-            Node {
-                width: Val::Px(320.0),
-                padding: UiRect::axes(Val::Px(16.0), Val::Px(10.0)),
-                justify_content: JustifyContent::SpaceBetween,
-                align_items: AlignItems::Center,
-                ..default()
+            settings_row_node(compact),
+            if selected {
+                selected_color()
+            } else {
+                settings_row_color()
             },
-            if selected { selected_color() } else { idle_color() },
             SettingsRow { index },
         ))
         .with_children(|parent| {
@@ -144,7 +203,7 @@ fn spawn_adjust_row(
                         Text::new(settings_value(index, config)),
                         TextFont {
                             font: font.clone(),
-                            font_size: ITEM_SIZE - 6.0,
+                            font_size: ITEM_SIZE - 2.0,
                             ..default()
                         },
                         TextColor(if selected {
@@ -180,7 +239,7 @@ fn spawn_adjust_button(
                 align_items: AlignItems::Center,
                 ..default()
             },
-            selected_color(),
+            settings_card_color(),
             SettingsAdjustButton { index, delta },
         ))
         .with_children(|parent| {
@@ -202,18 +261,17 @@ fn spawn_action_row(
     index: usize,
     label: &str,
     selected: bool,
+    compact: bool,
 ) {
     parent
         .spawn((
             Button,
-            Node {
-                width: Val::Px(MENU_BUTTON_WIDTH),
-                padding: UiRect::axes(Val::Px(MENU_BUTTON_PADDING_X), Val::Px(MENU_BUTTON_PADDING_Y)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
+            settings_row_node(compact),
+            if selected {
+                selected_color()
+            } else {
+                settings_row_color()
             },
-            if selected { selected_color() } else { idle_color() },
             SettingsRow { index },
             SettingsActionButton { index },
         ))
@@ -222,7 +280,7 @@ fn spawn_action_row(
                 Text::new(label),
                 TextFont {
                     font: font.clone(),
-                    font_size: ITEM_SIZE,
+                    font_size: ITEM_SIZE - 2.0,
                     ..default()
                 },
                 TextColor(if selected {
@@ -243,6 +301,7 @@ pub fn cleanup_settings_ui(
         commands.entity(e).despawn();
     }
     commands.remove_resource::<SettingsState>();
+    commands.remove_resource::<SettingsLayout>();
 }
 
 pub fn settings_input(
@@ -348,7 +407,7 @@ pub fn update_settings_visuals(
         background.0 = if is_selected {
             selected_color().0
         } else {
-            idle_color().0
+            settings_row_color().0
         };
     }
 
@@ -366,6 +425,41 @@ pub fn update_settings_visuals(
             accent_text()
         } else {
             Color::WHITE
+        };
+    }
+}
+
+pub fn adapt_settings_layout(
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut layout: ResMut<SettingsLayout>,
+    mut panel_query: Query<&mut Node, (With<SettingsPanel>, Without<SettingsRow>)>,
+    mut row_query: Query<&mut Node, (With<SettingsRow>, Without<SettingsPanel>)>,
+    mut controls_query: Query<&mut Visibility, With<SettingsControlsCard>>,
+) {
+    let Ok(window) = window_query.single() else {
+        return;
+    };
+
+    let compact = is_settings_compact(window.height());
+    if layout.compact == compact {
+        return;
+    }
+
+    layout.compact = compact;
+
+    for mut node in panel_query.iter_mut() {
+        *node = settings_panel_node(compact);
+    }
+
+    for mut node in row_query.iter_mut() {
+        *node = settings_row_node(compact);
+    }
+
+    for mut visibility in controls_query.iter_mut() {
+        *visibility = if compact {
+            Visibility::Hidden
+        } else {
+            Visibility::Inherited
         };
     }
 }
@@ -416,4 +510,8 @@ fn activate_settings_item(
         }
         _ => {}
     }
+}
+
+fn is_settings_compact(window_height: f32) -> bool {
+    window_height <= SETTINGS_COMPACT_HEIGHT_THRESHOLD
 }

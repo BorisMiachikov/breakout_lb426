@@ -4,12 +4,18 @@ use bevy::prelude::*;
 use serde::Deserialize;
 
 use crate::core::camera::{playfield_left, PLAYFIELD_WIDTH};
-use crate::gameplay::components::brick::{Brick, BrickType};
+use crate::gameplay::components::brick::Brick;
 use crate::gameplay::components::collider::Collider;
 
 use super::GameEntity;
 
 const DEFAULT_LEVEL_PATH: &str = "assets/levels/level1.json";
+
+#[derive(Clone, Copy)]
+enum BrickType {
+    Normal,
+    Strong,
+}
 
 #[derive(Resource, Clone, Debug)]
 pub struct CurrentLevelPath(pub String);
@@ -39,7 +45,7 @@ pub struct Block {
     pub color: Color,
 }
 
-pub fn spawn_block(commands: &mut Commands, block: &Block, brick_type: BrickType) {
+fn spawn_block(commands: &mut Commands, block: &Block, brick_type: BrickType) {
     let (health, color, score) = match brick_type {
         BrickType::Normal => (1, block.color, 100),
         BrickType::Strong => (2, Color::srgba(0.8, 0.4, 0.2, 1.0), 200),
@@ -55,7 +61,6 @@ pub fn spawn_block(commands: &mut Commands, block: &Block, brick_type: BrickType
         GlobalTransform::default(),
         Collider { size: block.size },
         Brick {
-            brick_type,
             health,
             score,
         },

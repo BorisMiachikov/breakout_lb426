@@ -1,9 +1,12 @@
 {
   "entries": [
     {
+      "player_label": "Player",
       "score": 500,
       "result": "Game Over",
-      "level_reached": 1
+      "level_reached": 1,
+      "run_id": 1775140000000000000,
+      "recorded_at_unix_secs": 1775140000
     }
   ]
 }
